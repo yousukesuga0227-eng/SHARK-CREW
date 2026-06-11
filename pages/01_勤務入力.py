@@ -3,6 +3,13 @@ from datetime import datetime, date
 from database import get_connection, init_db
 from auth import login
 
+login()
+
+if st.session_state.role != "admin":
+    st.error("管理者専用ページです。")
+    st.stop()
+
+
 st.set_page_config(
     page_title="勤務入力",
     page_icon="📝",

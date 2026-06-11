@@ -11,9 +11,17 @@ st.set_page_config(
 
 init_db()
 login()
+if "role" not in st.session_state:
+    st.stop()
+
 
 st.title("🦈 SHARK CREW")
-st.subheader("Smart Handling Attendance & Resource Keeper - Crew System")
+
+st.markdown("---")
+
+st.subheader(
+    f"👋 ようこそ {st.session_state.display_name}"
+)
 
 st.success(f"ログイン中：{st.session_state.display_name}")
 

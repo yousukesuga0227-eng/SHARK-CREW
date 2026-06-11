@@ -10,6 +10,7 @@ st.set_page_config(
 )
 
 init_db()
+
 login()
 
 # 管理者のみ
@@ -17,9 +18,51 @@ if st.session_state.role != "admin":
     st.error("管理者専用ページです。")
     st.stop()
 
+conn = get_connection()
+
+admin_count = conn.execute("""
+SELECT COUNT(*)
+FROM users
+WHERE role='admin'
+""").fetchone()[0]
+
+part_count = conn.execute("""
+SELECT COUNT(*)
+FROM users
+WHERE role='part_time'
+""").fetchone()[0]
+
+total_count = conn.execute("""
+SELECT COUNT(*)
+FROM users
+""").fetchone()[0]
+
 st.title("👥 ユーザー管理")
 
-conn = get_connection()
+col1, col2, col3 = st.columns(3)
+
+col1.metric("👥 全ユーザー", total_count)
+col2.metric("👑 管理者", admin_count)
+col3.metric("👷 バイト", part_count)
+
+st.divider()
+
+admin_count = conn.execute("""
+SELECT COUNT(*)
+FROM users
+WHERE role='admin'
+""").fetchone()[0]
+
+part_count = conn.execute("""
+SELECT COUNT(*)
+FROM users
+WHERE role='part_time'
+""").fetchone()[0]
+
+total_count = conn.execute("""
+SELECT COUNT(*)
+FROM users
+""").fetchone()[0]
 if "add_user_form_key" not in st.session_state:
     st.session_state.add_user_form_key = 0
 
@@ -67,15 +110,12 @@ with st.form(f"add_user_{st.session_state.add_user_form_key}"):
         else:
 
             try:
-
+                username = username.lower().strip()
+                display_name = display_name.strip()
+                password = password.strip()
                 conn.execute(
-                    
                     """
-                    username = username.lower().strip()
-                    display_name = display_name.strip()
-                    password = password.strip()
-                    INSERT INTO users
-                    (
+                    INSERT INTO users (
                         username,
                         password,
                         display_name,
@@ -112,7 +152,7 @@ with st.form(f"add_user_{st.session_state.add_user_form_key}"):
                 st.session_state.add_user_form_key += 1
                 st.rerun()
 
-            except:
+            except Exception:
 
                 st.error("同じIDがあります")
 
@@ -124,13 +164,26 @@ st.divider()
 
 st.subheader("👤 登録ユーザー")
 
+keyword = st.text_input(
+    "🔍 名前・ID検索"
+)
+
 users = conn.execute(
     """
     SELECT *
     FROM users
-    ORDER BY role DESC,
-    display_name
-    """
+    WHERE
+        display_name LIKE ?
+        OR
+        username LIKE ?
+    ORDER BY
+        role DESC,
+        display_name
+    """,
+    (
+        f"%{keyword}%",
+        f"%{keyword}%"
+    )
 ).fetchall()
 
 for user in users:
@@ -155,7 +208,7 @@ for user in users:
         """
         )
 
-with col2:
+    with col2:
 
         if user["role"] != "admin":
 
