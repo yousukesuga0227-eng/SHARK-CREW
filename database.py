@@ -83,24 +83,14 @@ def init_db():
     # =====================
     # 初期ユーザー
     # =====================
-    conn.execute("""
-    INSERT OR IGNORE INTO users (
-        username,
-        password,
-        display_name,
-        role,
-        created_at
-    )
-    VALUES (?, ?, ?, ?, ?)
-    """, (
-        "suga",
-        "0227",
-        "壽賀 洋佑",
-        "admin",
-        now
-    ))
+    admin_users = [
+    ("suga", "0227", "壽賀 洋佑"),
+    ("admin2", "1234", "管理者2"),
+    ("admin3", "1234", "管理者3"),
+]
 
-    conn.execute("""
+    for username, password, display_name in admin_users:
+        conn.execute("""
     INSERT OR IGNORE INTO users (
         username,
         password,
@@ -110,10 +100,10 @@ def init_db():
     )
     VALUES (?, ?, ?, ?, ?)
     """, (
-        "baito01",
-        "1234",
-        "バイト01",
-        "part_time",
+        username,
+        password,
+        display_name,
+        "admin",
         now
     ))
 
