@@ -4,21 +4,19 @@ from database import get_connection
 
 def login():
 
-    # すでにログイン済みなら何もしない
     if "user_id" in st.session_state:
         return True
 
     st.title("🦈 SHARK CREW")
-
     st.subheader("ログイン")
 
-username = st.text_input("ID").lower().strip()
-password = st.text_input(
-    "パスワード",
-    type="password"
-).strip()
+    username = st.text_input("ID").lower().strip()
+    password = st.text_input(
+        "パスワード",
+        type="password"
+    ).strip()
 
-if st.button("ログイン"):
+    if st.button("ログイン"):
 
         conn = get_connection()
 
@@ -39,7 +37,6 @@ if st.button("ログイン"):
         conn.close()
 
         if user:
-
             st.session_state.user_id = user["id"]
             st.session_state.username = user["username"]
             st.session_state.display_name = user["display_name"]
@@ -50,5 +47,4 @@ if st.button("ログイン"):
         else:
             st.error("IDまたはパスワードが違います")
 
-st.stop()
-    
+    st.stop()
