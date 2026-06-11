@@ -84,9 +84,9 @@ def init_db():
     # 初期ユーザー
     # =====================
     admin_users = [
-    ("suga", "0227", "壽賀 洋佑"),
-    ("admin2", "1234", "管理者2"),
-    ("admin3", "1234", "管理者3"),
+    ("y.suga", "5744", "壽賀 洋佑"),
+    ("s.shota", "3074", "鮫島 昇汰"),
+    ("k.wakasugi", "8147", "若杉 洸太"),
 ]
 
     for username, password, display_name in admin_users:
