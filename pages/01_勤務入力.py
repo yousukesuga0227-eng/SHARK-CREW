@@ -5,11 +5,6 @@ from auth import login
 
 login()
 
-if st.session_state.role != "admin":
-    st.error("管理者専用ページです。")
-    st.stop()
-
-
 st.set_page_config(
     page_title="勤務入力",
     page_icon="📝",
@@ -51,7 +46,7 @@ ORDER BY name
 conn.close()
 
 if not staff_members:
-    st.warning("一緒に働いた社員が登録されていません。")
+    st.warning("担当社員が登録されていません。")
     st.stop()
 
 staff_options = [staff["name"] for staff in staff_members]
@@ -64,7 +59,7 @@ with st.form("work_log_form"):
     work_date = st.date_input("勤務日", value=date.today())
     start_time = st.selectbox("開始時間", time_options, index=9)
     end_time = st.selectbox("終了時間", time_options, index=17)
-    partner_name = st.selectbox("一緒に働いた社員", staff_options)
+    partner_name = st.selectbox("担当社員", staff_options)
     memo = st.text_area("備考", placeholder="必要なら入力")
 
     submitted = st.form_submit_button("勤務登録")
