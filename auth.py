@@ -12,13 +12,13 @@ def login():
 
     st.subheader("ログイン")
 
-    username = st.text_input("ID")
-    password = st.text_input(
-        "パスワード",
-        type="password"
-    )
+username = st.text_input("ID").lower().strip()
+password = st.text_input(
+    "パスワード",
+    type="password"
+).strip()
 
-    if st.button("ログイン"):
+if st.button("ログイン"):
 
         conn = get_connection()
 
@@ -50,5 +50,5 @@ def login():
         else:
             st.error("IDまたはパスワードが違います")
 
-    st.stop()
+st.stop()
     
