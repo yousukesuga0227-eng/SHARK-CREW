@@ -18,13 +18,30 @@ def get_connection():
 
     return conn
 
+def add_column_if_not_exists(conn, table, column, definition):
+    columns = conn.execute(f"PRAGMA table_info({table})").fetchall()
+    column_names = [c["name"] for c in columns]
 
+    if column not in column_names:
+        conn.execute(
+            f"ALTER TABLE {table} ADD COLUMN {column} {definition}"
+        )
+    
 def init_db():
     """
     Supabase側にテーブルが無ければ作成し、
     初期adminと初期社員を投入する
     """
     conn = get_connection()
+
+    add_column_if_not_exists(conn, "users", "phone", "TEXT")
+    add_column_if_not_exists(conn, "users", "memo", "TEXT")
+    add_column_if_not_exists(conn, "users", "hourly_wage", "INTEGER DEFAULT 0")
+    add_column_if_not_exists(conn, "users", "is_active", "INTEGER DEFAULT 1")
+
+    conn.commit()
+    conn.close()
+
     cur = conn.cursor()
 
     # =====================
