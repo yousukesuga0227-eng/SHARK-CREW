@@ -11,17 +11,9 @@ st.set_page_config(
 
 init_db()
 login()
-if "role" not in st.session_state:
-    st.stop()
-
 
 st.title("🦈 SHARK CREW")
-
-st.markdown("---")
-
-st.subheader(
-    f"👋 ようこそ {st.session_state.display_name}"
-)
+st.subheader("Smart Handling Attendance & Resource Keeper - Crew System")
 
 st.success(f"ログイン中：{st.session_state.display_name}")
 
@@ -32,27 +24,32 @@ if st.button("ログアウト"):
 st.divider()
 
 conn = get_connection()
+cur = conn.cursor()
 
 today = date.today().strftime("%Y-%m-%d")
 
-pending_count = conn.execute("""
+cur.execute("""
 SELECT COUNT(*) AS count
 FROM work_logs
 WHERE status = 'pending'
-""").fetchone()["count"]
+""")
+pending_count = cur.fetchone()["count"]
 
-today_count = conn.execute("""
+cur.execute("""
 SELECT COUNT(*) AS count
 FROM work_logs
-WHERE work_date = ?
-""", (today,)).fetchone()["count"]
+WHERE work_date = %s
+""", (today,))
+today_count = cur.fetchone()["count"]
 
-active_user_count = conn.execute("""
+cur.execute("""
 SELECT COUNT(*) AS count
 FROM users
 WHERE is_active = 1
-""").fetchone()["count"]
+""")
+active_user_count = cur.fetchone()["count"]
 
+cur.close()
 conn.close()
 
 col1, col2, col3 = st.columns(3)

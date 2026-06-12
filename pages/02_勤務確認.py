@@ -3,12 +3,6 @@ from datetime import datetime
 from database import get_connection, init_db
 from auth import login
 
-login()
-
-if st.session_state.role != "admin":
-    st.error("管理者専用ページです。")
-    st.stop()
-
 st.set_page_config(
     page_title="勤務確認",
     page_icon="📋",
@@ -26,18 +20,21 @@ st.title("📋 勤務確認")
 st.caption("未確認データに支給金額を入力して承認します")
 
 conn = get_connection()
+cur = conn.cursor()
 
-pending_count = conn.execute("""
+cur.execute("""
 SELECT COUNT(*) AS count
 FROM work_logs
 WHERE status = 'pending'
-""").fetchone()["count"]
+""")
+pending_count = cur.fetchone()["count"]
 
-approved_count = conn.execute("""
+cur.execute("""
 SELECT COUNT(*) AS count
 FROM work_logs
 WHERE status = 'approved'
-""").fetchone()["count"]
+""")
+approved_count = cur.fetchone()["count"]
 
 col1, col2 = st.columns(2)
 
@@ -50,7 +47,7 @@ with col1:
 with col2:
     st.info(f"✅ 承認済：{approved_count} 件")
 
-rows = conn.execute("""
+cur.execute("""
 SELECT
     work_logs.*,
     users.display_name,
@@ -67,10 +64,13 @@ ORDER BY
     END,
     work_logs.work_date DESC,
     work_logs.created_at DESC
-""").fetchall()
+""")
+
+rows = cur.fetchall()
 
 if len(rows) == 0:
     st.info("勤務データはありません。")
+    cur.close()
     conn.close()
     st.stop()
 
@@ -111,14 +111,14 @@ for row in rows:
             if amount <= 0:
                 st.error("支給金額を入力してください。")
             else:
-                conn.execute("""
+                cur.execute("""
                 UPDATE work_logs
                 SET
-                    amount = ?,
+                    amount = %s,
                     status = 'approved',
-                    checked_by = ?,
-                    checked_at = ?
-                WHERE id = ?
+                    checked_by = %s,
+                    checked_at = %s
+                WHERE id = %s
                 """, (
                     amount,
                     st.session_state.user_id,
@@ -127,9 +127,8 @@ for row in rows:
                 ))
 
                 conn.commit()
-                conn.close()
-
                 st.success("承認しました！")
                 st.rerun()
 
+cur.close()
 conn.close()

@@ -4,12 +4,6 @@ from datetime import date, timedelta
 from database import get_connection, init_db
 from auth import login
 
-login()
-
-if st.session_state.role != "admin":
-    st.error("管理者専用ページです。")
-    st.stop()
-
 st.set_page_config(
     page_title="CSV出力",
     page_icon="📄",
@@ -28,7 +22,6 @@ st.caption("週払い用：日曜〜土曜の勤務データを出力します")
 
 today = date.today()
 
-# 今週の日曜日を計算
 start_of_week = today - timedelta(days=(today.weekday() + 1) % 7)
 end_of_week = start_of_week + timedelta(days=6)
 
@@ -41,18 +34,20 @@ with col2:
     end_date = st.date_input("終了日（土曜）", value=end_of_week)
 
 conn = get_connection()
+cur = conn.cursor()
 
-pending_count = conn.execute("""
+cur.execute("""
 SELECT COUNT(*) AS count
 FROM work_logs
-WHERE work_date BETWEEN ? AND ?
+WHERE work_date BETWEEN %s AND %s
 AND status = 'pending'
 """, (
     start_date.strftime("%Y-%m-%d"),
     end_date.strftime("%Y-%m-%d")
-)).fetchone()["count"]
+))
+pending_count = cur.fetchone()["count"]
 
-rows = conn.execute("""
+cur.execute("""
 SELECT
     users.display_name AS 名前,
     work_logs.site_name AS 現場,
@@ -66,13 +61,15 @@ SELECT
 FROM work_logs
 LEFT JOIN users
 ON users.id = work_logs.user_id
-WHERE work_date BETWEEN ? AND ?
+WHERE work_date BETWEEN %s AND %s
 ORDER BY work_date ASC, users.display_name ASC
 """, (
     start_date.strftime("%Y-%m-%d"),
     end_date.strftime("%Y-%m-%d")
-)).fetchall()
+))
+rows = cur.fetchall()
 
+cur.close()
 conn.close()
 
 st.divider()
@@ -88,7 +85,7 @@ if len(rows) == 0:
     st.info("対象期間の勤務データがありません。")
     st.stop()
 
-df = pd.DataFrame([dict(row) for row in rows])
+df = pd.DataFrame(rows)
 
 st.success("🟢 全件承認済みです。CSV出力できます。")
 st.dataframe(df, use_container_width=True)

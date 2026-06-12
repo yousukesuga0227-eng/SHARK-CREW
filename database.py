@@ -1,37 +1,38 @@
-import sqlite3
-from pathlib import Path
+import streamlit as st
+import psycopg2
+import psycopg2.extras
 from datetime import datetime
-
-DB_PATH = Path("data") / "shark_crew.db"
 
 
 def get_connection():
     """
-    DB接続を返す関数
+    Supabase PostgreSQLへ接続する関数
+    Streamlit CloudのSecretsに DATABASE_URL を設定しておく
     """
-    DB_PATH.parent.mkdir(exist_ok=True)
+    database_url = st.secrets["DATABASE_URL"]
 
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(
+        database_url,
+        cursor_factory=psycopg2.extras.RealDictCursor
+    )
 
     return conn
 
 
 def init_db():
     """
-    SHARK CREW用のDBと初期データを作成
+    Supabase側にテーブルが無ければ作成し、
+    初期adminと初期社員を投入する
     """
     conn = get_connection()
+    cur = conn.cursor()
 
     # =====================
     # ユーザー
-    # role:
-    # part_time → 勤務入力だけ
-    # admin     → 全部
     # =====================
-    conn.execute("""
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id BIGSERIAL PRIMARY KEY,
         username TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL,
         display_name TEXT NOT NULL,
@@ -43,11 +44,10 @@ def init_db():
 
     # =====================
     # 一緒に働いた社員
-    # バイト入力画面でプルダウン表示
     # =====================
-    conn.execute("""
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS staff_members (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id BIGSERIAL PRIMARY KEY,
         name TEXT NOT NULL UNIQUE,
         is_active INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL
@@ -56,12 +56,11 @@ def init_db():
 
     # =====================
     # 勤務ログ
-    # バイト入力 → admin確認 → CSV出力
     # =====================
-    conn.execute("""
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS work_logs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
+        id BIGSERIAL PRIMARY KEY,
+        user_id BIGINT NOT NULL REFERENCES users(id),
         site_name TEXT NOT NULL,
         work_date TEXT NOT NULL,
         start_time TEXT NOT NULL,
@@ -70,63 +69,58 @@ def init_db():
         memo TEXT,
         amount INTEGER,
         status TEXT NOT NULL DEFAULT 'pending',
-        checked_by INTEGER,
+        checked_by BIGINT REFERENCES users(id),
         checked_at TEXT,
-        created_at TEXT NOT NULL,
-        FOREIGN KEY (user_id) REFERENCES users(id),
-        FOREIGN KEY (checked_by) REFERENCES users(id)
+        created_at TEXT NOT NULL
     )
     """)
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # =====================
-    # 初期ユーザー
-    # =====================
     admin_users = [
-    ("y.suga", "5744", "壽賀 洋佑"),
-    ("s.shota", "3074", "鮫島 昇汰"),
-    ("k.wakasugi", "8147", "若杉 洸太"),
-]
+        ("y.suga", "5744", "壽賀 洋佑"),
+        ("s.shota", "3074", "鮫島 昇汰"),
+        ("k.wakasugi", "8147", "若杉 洸太"),
+    ]
 
     for username, password, display_name in admin_users:
-        conn.execute("""
-    INSERT OR IGNORE INTO users (
-        username,
-        password,
-        display_name,
-        role,
-        created_at
-    )
-    VALUES (?, ?, ?, ?, ?)
-    """, (
-        username,
-        password,
-        display_name,
-        "admin",
-        now
-    ))
+        cur.execute("""
+        INSERT INTO users (
+            username,
+            password,
+            display_name,
+            role,
+            created_at
+        )
+        VALUES (%s, %s, %s, %s, %s)
+        ON CONFLICT (username) DO NOTHING
+        """, (
+            username,
+            password,
+            display_name,
+            "admin",
+            now
+        ))
 
-    # =====================
-    # 初期社員
-    # =====================
     initial_staff = [
         "壽賀 洋佑",
-        "鮫島昇汰",
-        "若杉洸太",
+        "鮫島 昇汰",
+        "若杉 洸太",
     ]
 
     for staff_name in initial_staff:
-        conn.execute("""
-        INSERT OR IGNORE INTO staff_members (
+        cur.execute("""
+        INSERT INTO staff_members (
             name,
             created_at
         )
-        VALUES (?, ?)
+        VALUES (%s, %s)
+        ON CONFLICT (name) DO NOTHING
         """, (
             staff_name,
             now
         ))
 
     conn.commit()
+    cur.close()
     conn.close()

@@ -3,37 +3,36 @@ from database import get_connection
 
 
 def login():
-
     if "user_id" in st.session_state:
         return True
 
     st.title("🦈 SHARK CREW")
     st.subheader("ログイン")
 
-    username = st.text_input("ID").lower().strip()
-    password = st.text_input(
-        "パスワード",
-        type="password"
-    ).strip()
+    username = st.text_input("ID")
+    password = st.text_input("パスワード", type="password")
 
     if st.button("ログイン"):
-
         conn = get_connection()
+        cur = conn.cursor()
 
-        user = conn.execute(
+        cur.execute(
             """
             SELECT *
             FROM users
-            WHERE username=?
-            AND password=?
-            AND is_active=1
+            WHERE username = %s
+            AND password = %s
+            AND is_active = 1
             """,
             (
-                username,
-                password
+                username.strip().lower(),
+                password.strip()
             )
-        ).fetchone()
+        )
 
+        user = cur.fetchone()
+
+        cur.close()
         conn.close()
 
         if user:
@@ -41,9 +40,7 @@ def login():
             st.session_state.username = user["username"]
             st.session_state.display_name = user["display_name"]
             st.session_state.role = user["role"]
-
             st.rerun()
-
         else:
             st.error("IDまたはパスワードが違います")
 

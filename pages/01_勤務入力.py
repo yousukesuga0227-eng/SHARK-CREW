@@ -3,24 +3,11 @@ from datetime import datetime, date
 from database import get_connection, init_db
 from auth import login
 
-login()
-
 st.set_page_config(
     page_title="勤務入力",
     page_icon="📝",
     layout="centered"
 )
-
-st.markdown("""
-<style>
-div[data-testid="stFormSubmitButton"] button {
-    width: 100%;
-    height: 60px;
-    font-size: 22px;
-    font-weight: bold;
-}
-</style>
-""", unsafe_allow_html=True)
 
 init_db()
 login()
@@ -30,19 +17,23 @@ st.caption("SHARK CREW")
 
 st.success(f"ログイン中：{st.session_state.display_name}")
 
-if st.session_state.role != "part_time" and st.session_state.role != "admin":
+if st.session_state.role not in ["part_time", "admin"]:
     st.error("このページを表示する権限がありません。")
     st.stop()
 
 conn = get_connection()
+cur = conn.cursor()
 
-staff_members = conn.execute("""
+cur.execute("""
 SELECT name
 FROM staff_members
 WHERE is_active = 1
 ORDER BY name
-""").fetchall()
+""")
 
+staff_members = cur.fetchall()
+
+cur.close()
 conn.close()
 
 if not staff_members:
@@ -50,7 +41,6 @@ if not staff_members:
     st.stop()
 
 staff_options = [staff["name"] for staff in staff_members]
-
 time_options = [f"{hour:02d}:00" for hour in range(0, 25)]
 
 with st.form("work_log_form"):
@@ -71,8 +61,9 @@ with st.form("work_log_form"):
             st.error("終了時間は開始時間より後にしてください。")
         else:
             conn = get_connection()
+            cur = conn.cursor()
 
-            conn.execute("""
+            cur.execute("""
             INSERT INTO work_logs (
                 user_id,
                 site_name,
@@ -84,7 +75,7 @@ with st.form("work_log_form"):
                 status,
                 created_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 st.session_state.user_id,
                 site_name.strip(),
@@ -98,6 +89,7 @@ with st.form("work_log_form"):
             ))
 
             conn.commit()
+            cur.close()
             conn.close()
 
             st.success("勤務情報を登録しました！")
