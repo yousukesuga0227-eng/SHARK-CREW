@@ -218,27 +218,27 @@ for user in users:
             if st.button("パスワード変更", key=f"pass_open_{user['id']}"):
                 st.session_state[f"pass_change_{user['id']}"] = True
 
-        if st.session_state.get(f"pass_change_{user['id']}", False):
-            new_password = st.text_input(
-                "新しいパスワード",
-                type="password",
-                key=f"new_pass_{user['id']}"
-            )
+if st.session_state.get(f"pass_change_{user['id']}", False):
+    new_password = st.text_input(
+        "新しいパスワード",
+        type="password",
+        key=f"new_pass_{user['id']}"
+    )
 
-            if st.button("パスワード更新", key=f"pass_update_{user['id']}"):
-                if not new_password.strip():
-                    st.error("パスワードを入力してください。")
-                else:
-                    cur.execute("""
-                    UPDATE users
-                    SET password = %s
-                    WHERE id = %s
-                    """, (
-                        new_password.strip(),
-                        user["id"]
-                    ))
+    if st.button("パスワード更新", key=f"pass_update_{user['id']}"):
+        if not new_password.strip():
+            st.error("パスワードを入力してください。")
+        else:
+            cur.execute("""
+            UPDATE users
+            SET password = %s
+            WHERE id = %s
+            """, (
+                new_password.strip(),
+                user["id"]
+            ))
 
-                    conn.commit()
-                    st.success("パスワードを変更しました")
-                    st.session_state[f"pass_change_{user['id']}"] = False
-                    st.rerun()
+            conn.commit()
+            st.success("パスワードを変更しました")
+            st.session_state[f"pass_change_{user['id']}"] = False
+            st.rerun()
