@@ -5,10 +5,6 @@ from datetime import datetime
 
 
 def get_connection():
-    """
-    Supabase PostgreSQLへ接続する関数
-    Streamlit CloudのSecretsに DATABASE_URL を設定しておく
-    """
     database_url = st.secrets["DATABASE_URL"]
 
     conn = psycopg2.connect(
@@ -18,35 +14,34 @@ def get_connection():
 
     return conn
 
+
 def add_column_if_not_exists(conn, table, column, definition):
-    columns = conn.execute(f"PRAGMA table_info({table})").fetchall()
-    column_names = [c["name"] for c in columns]
-
-    if column not in column_names:
-        conn.execute(
-            f"ALTER TABLE {table} ADD COLUMN {column} {definition}"
-        )
-    
-def init_db():
-    """
-    Supabase側にテーブルが無ければ作成し、
-    初期adminと初期社員を投入する
-    """
-    conn = get_connection()
-
-    add_column_if_not_exists(conn, "users", "phone", "TEXT")
-    add_column_if_not_exists(conn, "users", "memo", "TEXT")
-    add_column_if_not_exists(conn, "users", "hourly_wage", "INTEGER DEFAULT 0")
-    add_column_if_not_exists(conn, "users", "is_active", "INTEGER DEFAULT 1")
-
-    conn.commit()
-    conn.close()
-
     cur = conn.cursor()
 
-    # =====================
-    # ユーザー
-    # =====================
+    cur.execute("""
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_name = %s
+    AND column_name = %s
+    """, (
+        table,
+        column
+    ))
+
+    exists = cur.fetchone()
+
+    if not exists:
+        cur.execute(
+            f"ALTER TABLE {table} ADD COLUMN {column} {definition}"
+        )
+
+    cur.close()
+
+
+def init_db():
+    conn = get_connection()
+    cur = conn.cursor()
+
     cur.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id BIGSERIAL PRIMARY KEY,
@@ -59,9 +54,6 @@ def init_db():
     )
     """)
 
-    # =====================
-    # 一緒に働いた社員
-    # =====================
     cur.execute("""
     CREATE TABLE IF NOT EXISTS staff_members (
         id BIGSERIAL PRIMARY KEY,
@@ -71,9 +63,6 @@ def init_db():
     )
     """)
 
-    # =====================
-    # 勤務ログ
-    # =====================
     cur.execute("""
     CREATE TABLE IF NOT EXISTS work_logs (
         id BIGSERIAL PRIMARY KEY,
@@ -91,6 +80,10 @@ def init_db():
         created_at TEXT NOT NULL
     )
     """)
+
+    add_column_if_not_exists(conn, "users", "phone", "TEXT")
+    add_column_if_not_exists(conn, "users", "memo", "TEXT")
+    add_column_if_not_exists(conn, "users", "is_active", "INTEGER DEFAULT 1")
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
