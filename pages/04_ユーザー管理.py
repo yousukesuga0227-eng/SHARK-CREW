@@ -152,13 +152,13 @@ for user in users:
 
         phone = st.text_input(
             "電話番号",
-            value=user["phone"] if user["phone"] else "",
+            value=user.get("phone", "") or "",
             key=f"phone_{user['id']}"
         )
 
         memo = st.text_area(
             "メモ",
-            value=user["memo"] if user["memo"] else "",
+            value=user.get("memo", "") or "",
             key=f"memo_{user['id']}"
         )
 
