@@ -38,7 +38,7 @@ cur = conn.cursor()
 
 cur.execute("""
 SELECT COUNT(*) AS count
-FROM work_logs
+FROM crew_work_logs
 WHERE work_date BETWEEN %s AND %s
 AND status = 'pending'
 """, (
@@ -49,20 +49,20 @@ pending_count = cur.fetchone()["count"]
 
 cur.execute("""
 SELECT
-    users.display_name AS 名前,
-    work_logs.site_name AS 現場,
-    work_logs.work_date AS 勤務日,
-    work_logs.start_time AS 開始時間,
-    work_logs.end_time AS 終了時間,
-    work_logs.partner_name AS 一緒に働いた社員,
-    work_logs.memo AS 備考,
-    work_logs.amount AS 支給額,
-    work_logs.status AS 状態
-FROM work_logs
-LEFT JOIN users
-ON users.id = work_logs.user_id
+    crew_users.display_name AS 名前,
+    crew_work_logs.site_name AS 現場,
+    crew_work_logs.work_date AS 勤務日,
+    crew_work_logs.start_time AS 開始時間,
+    crew_work_logs.end_time AS 終了時間,
+    crew_work_logs.partner_name AS 一緒に働いた社員,
+    crew_work_logs.memo AS 備考,
+    crew_work_logs.amount AS 支給額,
+    crew_work_logs.status AS 状態
+FROM crew_work_logs
+LEFT JOIN crew_users
+ON crew_users.id = crew_work_logs.user_id
 WHERE work_date BETWEEN %s AND %s
-ORDER BY work_date ASC, users.display_name ASC
+ORDER BY work_date ASC, crew_users.display_name ASC
 """, (
     start_date.strftime("%Y-%m-%d"),
     end_date.strftime("%Y-%m-%d")

@@ -19,10 +19,10 @@ def login():
         cur.execute(
             """
             SELECT *
-            FROM users
+            FROM crew_users
             WHERE username = %s
             AND password = %s
-            AND is_active = 1
+            AND is_active = TRUE
             """,
             (
                 username.strip().lower(),

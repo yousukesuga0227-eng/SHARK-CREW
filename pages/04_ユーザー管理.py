@@ -19,13 +19,13 @@ if st.session_state.role != "admin":
 conn = get_connection()
 cur = conn.cursor()
 
-cur.execute("SELECT COUNT(*) AS count FROM users")
+cur.execute("SELECT COUNT(*) AS count FROM crew_users")
 total_count = cur.fetchone()["count"]
 
-cur.execute("SELECT COUNT(*) AS count FROM users WHERE role = 'admin'")
+cur.execute("SELECT COUNT(*) AS count FROM crew_users WHERE role = 'admin'")
 admin_count = cur.fetchone()["count"]
 
-cur.execute("SELECT COUNT(*) AS count FROM users WHERE role = 'part_time'")
+cur.execute("SELECT COUNT(*) AS count FROM crew_users WHERE role = 'part_time'")
 part_count = cur.fetchone()["count"]
 
 st.title("👥 ユーザー管理")
@@ -63,7 +63,7 @@ with st.form(f"add_user_{st.session_state.add_user_form_key}"):
         else:
             try:
                 cur.execute("""
-                INSERT INTO users (
+                INSERT INTO crew_users (
                     username,
                     password,
                     display_name,
@@ -97,7 +97,7 @@ keyword = st.text_input("🔍 名前・ID検索").strip()
 
 cur.execute("""
 SELECT *
-FROM users
+FROM crew_users
 WHERE display_name ILIKE %s
 OR username ILIKE %s
 ORDER BY
@@ -167,7 +167,7 @@ for user in users:
         with col1:
             if st.button("更新", key=f"update_{user['id']}"):
                 cur.execute("""
-                UPDATE users
+                UPDATE crew_users
                 SET
                     display_name = %s,
                     username = %s,
@@ -192,8 +192,8 @@ for user in users:
             if user["is_active"]:
                 if st.button("非表示", key=f"off_{user['id']}"):
                     cur.execute("""
-                    UPDATE users
-                    SET is_active = 0
+                    UPDATE crew_users
+                    SET is_active = FALSE
                     WHERE id = %s
                     """, (
                         user["id"],
@@ -204,8 +204,8 @@ for user in users:
             else:
                 if st.button("再表示", key=f"on_{user['id']}"):
                     cur.execute("""
-                    UPDATE users
-                    SET is_active = 1
+                    UPDATE crew_users
+                    SET is_active = TRUE
                     WHERE id = %s
                     """, (
                         user["id"],
@@ -218,27 +218,30 @@ for user in users:
             if st.button("パスワード変更", key=f"pass_open_{user['id']}"):
                 st.session_state[f"pass_change_{user['id']}"] = True
 
-if st.session_state.get(f"pass_change_{user['id']}", False):
-    new_password = st.text_input(
-        "新しいパスワード",
-        type="password",
-        key=f"new_pass_{user['id']}"
-    )
+        if st.session_state.get(f"pass_change_{user['id']}", False):
+            new_password = st.text_input(
+                "新しいパスワード",
+                type="password",
+                key=f"new_pass_{user['id']}"
+            )
 
-    if st.button("パスワード更新", key=f"pass_update_{user['id']}"):
-        if not new_password.strip():
-            st.error("パスワードを入力してください。")
-        else:
-            cur.execute("""
-            UPDATE users
-            SET password = %s
-            WHERE id = %s
-            """, (
-                new_password.strip(),
-                user["id"]
-            ))
+            if st.button("パスワード更新", key=f"pass_update_{user['id']}"):
+                if not new_password.strip():
+                    st.error("パスワードを入力してください。")
+                else:
+                    cur.execute("""
+                    UPDATE crew_users
+                    SET password = %s
+                    WHERE id = %s
+                    """, (
+                        new_password.strip(),
+                        user["id"]
+                    ))
 
-            conn.commit()
-            st.success("パスワードを変更しました")
-            st.session_state[f"pass_change_{user['id']}"] = False
-            st.rerun()
+                    conn.commit()
+                    st.success("パスワードを変更しました")
+                    st.session_state[f"pass_change_{user['id']}"] = False
+                    st.rerun()
+
+cur.close()
+conn.close()

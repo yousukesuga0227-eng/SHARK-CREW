@@ -1,1 +1,7 @@
 .streamlit/
+__pycache__/
+*.pyc
+venv/
+.streamlit/secrets.toml
+SHARK_CREW_TABLE_SEPARATION_*/
+_shark_crew_table_separation_backup_*/

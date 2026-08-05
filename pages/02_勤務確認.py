@@ -24,14 +24,14 @@ cur = conn.cursor()
 
 cur.execute("""
 SELECT COUNT(*) AS count
-FROM work_logs
+FROM crew_work_logs
 WHERE status = 'pending'
 """)
 pending_count = cur.fetchone()["count"]
 
 cur.execute("""
 SELECT COUNT(*) AS count
-FROM work_logs
+FROM crew_work_logs
 WHERE status = 'approved'
 """)
 approved_count = cur.fetchone()["count"]
@@ -49,21 +49,21 @@ with col2:
 
 cur.execute("""
 SELECT
-    work_logs.*,
-    users.display_name,
+    crew_work_logs.*,
+    crew_users.display_name,
     checked_user.display_name AS checked_name
-FROM work_logs
-LEFT JOIN users
-ON users.id = work_logs.user_id
-LEFT JOIN users AS checked_user
-ON checked_user.id = work_logs.checked_by
+FROM crew_work_logs
+LEFT JOIN crew_users
+ON crew_users.id = crew_work_logs.user_id
+LEFT JOIN crew_users AS checked_user
+ON checked_user.id = crew_work_logs.checked_by
 ORDER BY
     CASE
-        WHEN work_logs.status = 'pending' THEN 0
+        WHEN crew_work_logs.status = 'pending' THEN 0
         ELSE 1
     END,
-    work_logs.work_date DESC,
-    work_logs.created_at DESC
+    crew_work_logs.work_date DESC,
+    crew_work_logs.created_at DESC
 """)
 
 rows = cur.fetchall()
@@ -112,7 +112,7 @@ for row in rows:
                 st.error("支給金額を入力してください。")
             else:
                 cur.execute("""
-                UPDATE work_logs
+                UPDATE crew_work_logs
                 SET
                     amount = %s,
                     status = 'approved',

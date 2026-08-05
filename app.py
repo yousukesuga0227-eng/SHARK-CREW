@@ -30,22 +30,22 @@ today = date.today().strftime("%Y-%m-%d")
 
 cur.execute("""
 SELECT COUNT(*) AS count
-FROM work_logs
+FROM crew_work_logs
 WHERE status = 'pending'
 """)
 pending_count = cur.fetchone()["count"]
 
 cur.execute("""
 SELECT COUNT(*) AS count
-FROM work_logs
+FROM crew_work_logs
 WHERE work_date = %s
 """, (today,))
 today_count = cur.fetchone()["count"]
 
 cur.execute("""
 SELECT COUNT(*) AS count
-FROM users
-WHERE is_active = 1
+FROM crew_users
+WHERE is_active = TRUE
 """)
 active_user_count = cur.fetchone()["count"]
 

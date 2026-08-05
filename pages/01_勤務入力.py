@@ -64,7 +64,7 @@ with st.form("work_log_form"):
             cur = conn.cursor()
 
             cur.execute("""
-            INSERT INTO work_logs (
+            INSERT INTO crew_work_logs (
                 user_id,
                 site_name,
                 work_date,
