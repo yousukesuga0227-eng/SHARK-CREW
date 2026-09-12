@@ -197,7 +197,7 @@ div[class*="st-key-crew_day_"] {
 }
 div[class*="st-key-crew_event_"] button {
     text-align: left; justify-content: flex-start;
-    min-height: 76px; border-radius: 7px; padding: 7px 9px;
+    min-height: 36px; border-radius: 7px; padding: 5px 9px;
 }
 div[class*="st-key-crew_event_"] button p { white-space: pre-line; }
 div[class*="st-key-crew_event_pending_"] button {
@@ -230,11 +230,9 @@ for week_index, week in enumerate(calendar.Calendar(firstweekday=6).monthdatesca
                 for row in by_day.get(day.isoformat(), []):
                     status = row["status"]
                     style = status if status in ("pending", "approved") else "other"
-                    marker = "🟢" if status == "approved" else "🟠" if status == "pending" else "⚪"
+
                     state_label = "承認済み" if status == "approved" else "未承認" if status == "pending" else str(status)
-                    label = (f"{marker} {row.get('display_name') or '名前未登録'}\n"
-                             f"{row['site_name']}\n"
-                             f"{str(row['start_time'])[:5]} ～ {str(row['end_time'])[:5]}")
+                    label = row.get("display_name") or "名前未登録"
                     with st.container(key=f"crew_event_{style}_{row['id']}"):
                         if st.button(label, key=f"crew_open_{row['id']}",
                                      help=f"{state_label}：押すと勤怠の詳細を開きます",
