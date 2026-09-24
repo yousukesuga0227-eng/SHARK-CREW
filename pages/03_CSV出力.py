@@ -77,17 +77,17 @@ st.divider()
 st.write(f"対象期間：**{start_date} 〜 {end_date}**")
 st.write(f"未承認件数：**{pending_count} 件**")
 
-if pending_count > 0:
-    st.error("🚫 未確認データがあります。CSV出力できません。")
-    st.stop()
-
 if len(rows) == 0:
     st.info("対象期間の勤務データがありません。")
     st.stop()
 
 df = pd.DataFrame(rows)
 
-st.success("🟢 全件承認済みです。CSV出力できます。")
+if pending_count > 0:
+    st.warning(f"⚠️ 未承認データが {pending_count} 件あります。未承認データを含めてCSV出力できます。")
+else:
+    st.success("🟢 全件承認済みです。CSV出力できます。")
+
 st.dataframe(df, use_container_width=True)
 
 csv = df.to_csv(index=False).encode("utf-8-sig")
